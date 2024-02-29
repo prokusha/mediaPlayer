@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QMediaPlayer>
+#include <QAudioOutput>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -21,9 +22,15 @@ public:
 private slots:
     void on_horizontalSlider_valueChanged(int value);
 
+    void on_openFileBtn_clicked();
+
+    void on_volumeSlider_valueChanged(int value);
+
 private:
     Ui::MainWindow *ui;
     QMediaPlayer * player = new QMediaPlayer;
+    QAudioOutput * audioOutput = new QAudioOutput;
+
 
     void connectElements();
 };
