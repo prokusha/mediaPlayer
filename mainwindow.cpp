@@ -1,10 +1,12 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "testing.h"
+#include "dialogurl.h"
 
 #include <QDebug>
 #include <QLabel>
 #include <QFileDialog>
+#include <QProcess>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -19,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connectElements();
 
-    testing::testPlaySoundURL(player);
+    // testing::testPlaySoundURL(player);
 }
 
 MainWindow::~MainWindow()
@@ -69,5 +71,30 @@ void MainWindow::on_volumeSlider_valueChanged(int value)
 
     audioOutput->setVolume(value / qreal(100.0));
     qDebug() << audioOutput->volume();
+}
+
+
+void MainWindow::on_openURLBtn_clicked()
+{
+    DialogUrl * w = new DialogUrl();
+    if (w->exec() == QDialog::Accepted) {
+        QString urlPath = w->getUrl();
+
+        if (QUrl url = QUrl::fromUserInput(urlPath); !url.isLocalFile()) {
+            qDebug() << url.toString();
+            if (w->ytdlCheck()) {
+                QString urlStr = url.toString();
+                QProcess ytdl;
+                QStringList args {"--get-url", "-f 140", urlStr};
+                ytdl.start("./yt-dlp", args);
+                ytdl.waitForFinished();
+                urlStr = ytdl.readAllStandardOutput();
+                qDebug() << urlStr;
+                url = QUrl(urlStr);
+            }
+            player->setSource(url);
+            player->play();
+        }
+    }
 }
 
