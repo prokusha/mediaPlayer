@@ -34,7 +34,7 @@
 *.cxxflags
 *.cflags
 
-CMakeLists.txt.user
+*.txt.user
 
 
 # End of https://www.toptal.com/developers/gitignore/api/qtcreator
