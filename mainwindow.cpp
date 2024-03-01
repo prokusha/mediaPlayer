@@ -7,6 +7,8 @@
 #include <QLabel>
 #include <QFileDialog>
 #include <QProcess>
+#include <QFileInfo>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -83,6 +85,10 @@ void MainWindow::on_openURLBtn_clicked()
         if (QUrl url = QUrl::fromUserInput(urlPath); !url.isLocalFile()) {
             qDebug() << url.toString();
             if (w->ytdlCheck()) {
+                if (!QFileInfo::exists("./yt-dlp")) {
+                    QMessageBox::information(this, "Warning", "yt-dlp not found");
+                    return on_openURLBtn_clicked();
+                }
                 QString urlStr = url.toString();
                 QProcess ytdl;
                 QStringList args {"--get-url", "-f 140", urlStr};

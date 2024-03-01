@@ -1,6 +1,9 @@
 #include "dialogurl.h"
 #include "ui_dialogurl.h"
 
+#include <QFileInfo>
+#include <QMessageBox>
+
 DialogUrl::DialogUrl(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::DialogUrl)
@@ -20,3 +23,4 @@ QString DialogUrl::getUrl() {
 bool DialogUrl::ytdlCheck() {
     return ui->checkBox->isChecked();
 }
+
