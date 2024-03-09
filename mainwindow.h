@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QMediaPlayer>
 #include <QAudioOutput>
+#include <QMediaMetaData>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -28,12 +29,15 @@ private slots:
 
     void on_openURLBtn_clicked();
 
+    void setMetaData();
+
 private:
     Ui::MainWindow *ui;
     QMediaPlayer * player = new QMediaPlayer;
     QAudioOutput * audioOutput = new QAudioOutput;
 
-
     void connectElements();
+    void setPlay(QUrl& url);
+
 };
 #endif // MAINWINDOW_H

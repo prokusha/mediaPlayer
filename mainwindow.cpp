@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-#include "testing.h"
+#include "helper.h"
 #include "dialogurl.h"
 
 #include <QDebug>
@@ -9,6 +9,7 @@
 #include <QProcess>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QMediaMetaData>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -34,9 +35,11 @@ MainWindow::~MainWindow()
 void MainWindow::connectElements() {
     // play slider
     connect(player, &QMediaPlayer::positionChanged, ui->horizontalSlider, &QSlider::setValue);
-    connect(player, &QMediaPlayer::durationChanged, ui->horizontalSlider, &QSlider::setMaximum);
-    connect(ui->horizontalSlider, &QSlider::sliderMoved, player, &QMediaPlayer::setPosition);
+    connect(player, SIGNAL(metaDataChanged()), this, SLOT(setMetaData()));
     // sliders
+    connect(ui->horizontalSlider, &QSlider::sliderMoved, player, &QMediaPlayer::setPosition);
+    connect(ui->horizontalSlider, &QSlider::sliderPressed, player, &QMediaPlayer::pause);
+    connect(ui->horizontalSlider, &QSlider::sliderReleased, player, &QMediaPlayer::play);
     // connect(ui->volumeSlider, &QSlider::valueChanged, audioOutput, &QAudioOutput::setVolume);
     connect(ui->volumeSlider, SIGNAL(valueChanged(int)), ui->labelVolme, SLOT(setNum(int)));
     // buttons
@@ -45,15 +48,64 @@ void MainWindow::connectElements() {
     connect(ui->pauseBtn, SIGNAL(clicked()), player, SLOT(pause()));
 }
 
+void MainWindow::setPlay(QUrl& url) {
+    player->setSource(url);
+    player->play();
+}
+
+void MainWindow::setMetaData() {
+    QMediaMetaData value = player->metaData();
+
+    int duraction = value[QMediaMetaData::Duration].toInt();
+
+    helper::Time time(duraction);
+    QString timeText = "/ ";
+    timeText += time.min < 10 ? '0' + QString::number(time.min) + ':' : QString::number(time.min) + ':';
+    timeText += time.sec < 10 ? '0' + QString::number(time.sec) : QString::number(time.sec);
+
+    qDebug() << duraction;
+
+    ui->mediaTime_2->setText(timeText);
+    ui->horizontalSlider->setMaximum(duraction);
+
+    QList keys = value.keys();
+
+    for (auto key : keys) {
+        qDebug() << key << value[key];
+    }
+    QList author = value[QMediaMetaData::ContributingArtist].toList();
+    QString title = value[QMediaMetaData::Title].toString();
+    // qDebug() << author[0].toString() << title;
+
+    QString info = "";
+    if (!author.empty()) {
+        bool first = true;
+        for (int i = 0; i < author.size(); ++i) {
+            if (first) {
+                first = false;
+            } else {
+                info += ", ";
+            }
+            info += author[i].toString();
+        }
+        info += " - ";
+        info += title;
+    } else {
+        info += player->source().fileName();
+    }
+
+    ui->labelMedia->setText(info);
+    ui->labelMedia->adjustSize();
+}
+
 void MainWindow::on_horizontalSlider_valueChanged(int value)
 {
-    int sec = value / 1000;
-    int min = sec / 60;
-    if (sec > 60) {
-        sec -= min * 60;
-    }
-    ui->lcdNumber->display(min);
-    ui->lcdNumber_2->display(sec);
+    helper::Time time(value);
+    QString timeText;
+    timeText += time.min < 10 ? '0' + QString::number(time.min) + ':' : QString::number(time.min) + ':';
+    timeText += time.sec < 10 ? '0' + QString::number(time.sec) : QString::number(time.sec);
+    ui->mediaTime->clear();
+    ui->mediaTime->setText(timeText);
 }
 
 
@@ -63,8 +115,7 @@ void MainWindow::on_openFileBtn_clicked()
     if (file.isEmpty()) {
         return;
     }
-    player->setSource(file);
-    player->play();
+    setPlay(file);
 }
 
 
@@ -72,7 +123,7 @@ void MainWindow::on_volumeSlider_valueChanged(int value)
 {
 
     audioOutput->setVolume(value / qreal(100.0));
-    qDebug() << audioOutput->volume();
+    // qDebug() << audioOutput->volume();
 }
 
 
@@ -98,8 +149,7 @@ void MainWindow::on_openURLBtn_clicked()
                 qDebug() << urlStr;
                 url = QUrl(urlStr);
             }
-            player->setSource(url);
-            player->play();
+            setPlay(url);
         }
     }
 }
